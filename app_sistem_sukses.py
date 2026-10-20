@@ -2,6 +2,7 @@ import datetime
 import json
 import os
 import streamlit as st
+import streamlit.components.v1 as components
 
 # Set Page Config
 st.set_page_config(
@@ -67,8 +68,11 @@ DATA_FILE = "bank_bahan.json"
 
 def load_bank_bahan():
     if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r") as f:
-            return json.load(f)
+        try:
+            with open(DATA_FILE, "r") as f:
+                return json.load(f)
+        except Exception:
+            pass
     return {
         "quotes": [
             "Continuous effort - not strength or intelligence - is the key to unlocking our potential.",
@@ -98,10 +102,16 @@ tz_option = st.sidebar.selectbox(
 
 if "WITA" in tz_option:
     current_tz = TIMEZONE_WITA
+    tz_iana = "Asia/Makassar"
+    tz_label = "WITA"
 elif "WIT" in tz_option:
     current_tz = TIMEZONE_WIT
+    tz_iana = "Asia/Jayapura"
+    tz_label = "WIT"
 else:
     current_tz = TIMEZONE_WIB
+    tz_iana = "Asia/Jakarta"
+    tz_label = "WIB"
 
 # Dapatkan Waktu Sekarang Sesuai Timezone
 now_real = datetime.datetime.now(current_tz)
@@ -119,9 +129,55 @@ else:
     days_map = {0: "Senin", 1: "Selasa", 2: "Rabu", 3: "Kamis", 4: "Jumat", 5: "Sabtu", 6: "Minggu"}
     day_name = days_map[now_real.weekday()]
 
+# Auto Refresh untuk memperbarui Blok Aktif setiap 60 detik (jika tidak dalam mode simulasi)
+auto_refresh = st.sidebar.checkbox("Auto Refresh Blok (Setiap 60 dtk)", value=True)
+
 # --- HEADER APP ---
 st.markdown("<div class='main-header'>🚀 Personal System Assistant</div>", unsafe_allow_html=True)
-st.markdown(f"<div class='sub-header'>Hari: <b>{day_name}</b> | Jam Aktif: <b>{now_time.strftime('%H:%M:%S')}</b> ({tz_option.split()[0]})</div>", unsafe_allow_html=True)
+
+# Widget Jam Digital Realtime (Ticking Seconds via JavaScript)
+if not use_sim:
+    js_clock_html = f"""
+    <div style="font-family: system-ui, -apple-system, sans-serif; background: linear-gradient(135deg, #EFF6FF 0%, #E0F2FE 100%); border: 1px solid #BFDBFE; padding: 12px 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.1rem;">⏰</span>
+            <span style="font-size: 0.95rem; color: #1E40AF; font-weight: 600;">Waktu Realtime ({tz_label}):</span>
+            <span id="live-clock" style="font-size: 1.35rem; font-weight: 800; color: #1D4ED8; font-family: monospace; letter-spacing: 1px; margin-left: 6px;">--:--:--</span>
+        </div>
+        <div style="font-size: 1rem; color: #1E293B; font-weight: 600;">
+            📅 Hari: <span style="color: #2563EB;">{day_name}</span>
+        </div>
+    </div>
+
+    <script>
+    function updateClock() {{
+        try {{
+            const options = {{ timeZone: '{tz_iana}', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }};
+            const now = new Date();
+            const formatter = new Intl.DateTimeFormat('en-US', options);
+            document.getElementById('live-clock').textContent = formatter.format(now);
+        }} catch(e) {{
+            const now = new Date();
+            document.getElementById('live-clock').textContent = now.toTimeString().split(' ')[0];
+        }}
+    }}
+    setInterval(updateClock, 1000);
+    updateClock();
+    </script>
+    """
+    components.html(js_clock_html, height=65)
+else:
+    st.markdown(f"<div class='sub-header'>⚠️ <b>MODAL SIMULASI MANUAL</b> | Hari: <b>{day_name}</b> | Jam Simulasi: <b>{now_time.strftime('%H:%M:%S')}</b> ({tz_label})</div>", unsafe_allow_html=True)
+
+# Optional Client-side Auto Reload every 60 seconds to refresh active blocks automatically
+if auto_refresh and not use_sim:
+    components.html("""
+    <script>
+    setTimeout(function(){
+        window.parent.postMessage({type: 'streamlit:render'}, '*');
+    }, 60000);
+    </script>
+    """, height=0)
 
 # --- DEFINISI BLOK JADWAL ---
 def get_current_block(day, current_time):
