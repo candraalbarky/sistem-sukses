@@ -8,12 +8,11 @@ st.set_page_config(
     page_title="Sistem Sukses Assistant",
     page_icon="🚀",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="expanded"
 )
 
 # Custom Styling (CSS)
-st.markdown(
-    """
+st.markdown("""
 <style>
     .main-header {
         font-size: 2.2rem;
@@ -49,432 +48,245 @@ st.markdown(
         font-family: monospace;
     }
 </style>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
+
+# --- TIMEZONE HANDLING ---
+try:
+    from zoneinfo import ZoneInfo
+    TIMEZONE_WIB = ZoneInfo("Asia/Jakarta")
+    TIMEZONE_WITA = ZoneInfo("Asia/Makassar")
+    TIMEZONE_WIT = ZoneInfo("Asia/Jayapura")
+except Exception:
+    import pytz
+    TIMEZONE_WIB = pytz.timezone("Asia/Jakarta")
+    TIMEZONE_WITA = pytz.timezone("Asia/Makassar")
+    TIMEZONE_WIT = pytz.timezone("Asia/Jayapura")
 
 # --- INITIALIZE DATA & BANK BAHAN ---
 DATA_FILE = "bank_bahan.json"
 
-
 def load_bank_bahan():
-    default_data = {
-        "quotes": [
-            "Persuasion is not about convincing people, it's about connecting with their existing desires.",
-            "Clear communication is the bridge between confusion and clarity.",
-            "Consistency in small actions builds unstoppable momentum over time.",
-            "Speak with intention, listen with empathy, and lead with clarity.",
-            "Your systems determine your success, not your willpower alone.",
-            "Mastering interpersonal communication starts with understanding yourself first.",
-        ],
-        "vlog_script": {
-            "Hook (3s)": "Cuplikan 3 detik aktivitas terpenting hari ini (misal: buka laptop/mushaf).",
-            "Body (10s)": "Proses pengerjaan tugas Sistem Informasi & sesi fokus coding.",
-            "CTA (2s)": "Pertanyaan interaktif untuk penonton: 'Sistem apa yang kamu bangun hari ini?'",
-        },
-    }
     if os.path.exists(DATA_FILE):
-        try:
-            with open(DATA_FILE, "r") as f:
-                return json.load(f)
-        except Exception:
-            return default_data
-    return default_data
-
+        with open(DATA_FILE, "r") as f:
+            return json.load(f)
+    return {
+        "quotes": [
+            "Continuous effort - not strength or intelligence - is the key to unlocking our potential.",
+            "The secret of getting ahead is getting started.",
+            "Small daily improvements over time lead to stunning results.",
+            "Discipline is choosing between what you want now and what you want most.",
+            "You don't have to be great to start, but you have to start to be great.",
+            "Communication is a skill that you can learn. It's like riding a bicycle."
+        ]
+    }
 
 def save_bank_bahan(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
-
 bank_data = load_bank_bahan()
 
-# --- JADWAL & TIME BLOCKING DATABASE ---
-SCHEDULE_DB = {
-    "Senin": [
-        {
-            "start": "05:00",
-            "end": "06:00",
-            "activity": "🟢 Blok Al-Qur'an (Menghafal & Muroja'ah)",
-            "type": "quran",
-        },
-        {
-            "start": "06:00",
-            "end": "07:00",
-            "activity": "🎬 CapCut Quote Batching (6 Template)",
-            "type": "capcut_quote",
-        },
-        {
-            "start": "08:30",
-            "end": "10:10",
-            "activity": "📚 Kuliah: Pengantar Organisasi",
-            "type": "kuliah",
-        },
-        {
-            "start": "10:30",
-            "end": "11:30",
-            "activity": "📹 CapCut Vlog Template (1 Template)",
-            "type": "capcut_vlog",
-        },
-        {
-            "start": "13:00",
-            "end": "14:40",
-            "activity": "📚 Kuliah: Keterampilan Komunikasi",
-            "type": "kuliah",
-        },
-        {
-            "start": "16:00",
-            "end": "17:30",
-            "activity": "💻 Blok Coding & Tugas Sistem Informasi",
-            "type": "coding",
-        },
-        {
-            "start": "19:30",
-            "end": "20:30",
-            "activity": "🗣️ Soft Skills 3-in-1 (Inggris, Speaking, Persuasi)",
-            "type": "softskills",
-        },
-    ],
-    "Selasa": [
-        {
-            "start": "05:00",
-            "end": "06:00",
-            "activity": "🟢 Blok Al-Qur'an (Menghafal & Muroja'ah)",
-            "type": "quran",
-        },
-        {
-            "start": "06:00",
-            "end": "07:00",
-            "activity": "🎬 CapCut Quote Batching (6 Template)",
-            "type": "capcut_quote",
-        },
-        {
-            "start": "09:30",
-            "end": "11:10",
-            "activity": "📚 Kuliah: Kalkulus",
-            "type": "kuliah",
-        },
-        {
-            "start": "13:00",
-            "end": "14:00",
-            "activity": "📹 CapCut Vlog Template (1 Template)",
-            "type": "capcut_vlog",
-        },
-        {
-            "start": "16:00",
-            "end": "17:30",
-            "activity": "💻 Blok Coding (Latihan Python/Algoritma)",
-            "type": "coding",
-        },
-        {
-            "start": "19:30",
-            "end": "20:30",
-            "activity": "🗣️ Soft Skills & Latihan Bahasa Inggris",
-            "type": "softskills",
-        },
-    ],
-    "Rabu": [
-        {
-            "start": "05:00",
-            "end": "06:00",
-            "activity": "🟢 Blok Al-Qur'an (Menghafal & Muroja'ah)",
-            "type": "quran",
-        },
-        {
-            "start": "06:00",
-            "end": "07:00",
-            "activity": "🎬 CapCut Quote Batching (6 Template)",
-            "type": "capcut_quote",
-        },
-        {
-            "start": "10:20",
-            "end": "12:00",
-            "activity": "🌐 Kuliah Online: Bahasa Indonesia",
-            "type": "kuliah",
-        },
-        {
-            "start": "13:00",
-            "end": "14:40",
-            "activity": "🌐 Kuliah Online: Agama Islam",
-            "type": "kuliah",
-        },
-        {
-            "start": "14:40",
-            "end": "16:20",
-            "activity": "🌐 Kuliah Online: Pancasila",
-            "type": "kuliah",
-        },
-        {
-            "start": "19:30",
-            "end": "20:30",
-            "activity": "📹 CapCut Vlog & Review Mandiri",
-            "type": "capcut_vlog",
-        },
-    ],
-    "Kamis": [
-        {
-            "start": "05:00",
-            "end": "06:00",
-            "activity": "🟢 Blok Al-Qur'an (Menghafal & Muroja'ah)",
-            "type": "quran",
-        },
-        {
-            "start": "06:00",
-            "end": "07:00",
-            "activity": "🎬 CapCut Quote Batching (6 Template)",
-            "type": "capcut_quote",
-        },
-        {
-            "start": "08:30",
-            "end": "11:30",
-            "activity": "⚡ Deep Work Day: Projek Coding & Praktik SI",
-            "type": "coding",
-        },
-        {
-            "start": "13:00",
-            "end": "14:00",
-            "activity": "📹 CapCut Vlog & Stock Materials Prep",
-            "type": "capcut_vlog",
-        },
-        {
-            "start": "16:00",
-            "end": "17:30",
-            "activity": "💻 Latihan Pemrograman & Problem Solving",
-            "type": "coding",
-        },
-        {
-            "start": "19:30",
-            "end": "20:30",
-            "activity": "🗣️ Soft Skills & Bank Bahan Expansion",
-            "type": "softskills",
-        },
-    ],
-    "Jumat": [
-        {
-            "start": "05:00",
-            "end": "06:00",
-            "activity": "🟢 Blok Al-Qur'an (Menghafal & Muroja'ah)",
-            "type": "quran",
-        },
-        {
-            "start": "06:00",
-            "end": "07:00",
-            "activity": "🎬 CapCut Quote Batching (6 Template)",
-            "type": "capcut_quote",
-        },
-        {
-            "start": "08:00",
-            "end": "10:00",
-            "activity": "📚 Kuliah: Algoritma dan Pemrograman",
-            "type": "kuliah",
-        },
-        {
-            "start": "10:00",
-            "end": "11:00",
-            "activity": "📹 CapCut Vlog Template (1 Template)",
-            "type": "capcut_vlog",
-        },
-        {
-            "start": "13:00",
-            "end": "14:40",
-            "activity": "📚 Kuliah: Konsep Sistem Informasi",
-            "type": "kuliah",
-        },
-        {
-            "start": "16:00",
-            "end": "17:30",
-            "activity": "💻 Blok Coding Mandiri (Review Materi Jumat)",
-            "type": "coding",
-        },
-        {
-            "start": "19:30",
-            "end": "20:30",
-            "activity": "🗣️ Soft Skills 3-in-1",
-            "type": "softskills",
-        },
-    ],
-    "Sabtu": [
-        {
-            "start": "05:00",
-            "end": "06:00",
-            "activity": "🟢 Blok Al-Qur'an (Menghafal & Muroja'ah)",
-            "type": "quran",
-        },
-        {
-            "start": "08:00",
-            "end": "10:00",
-            "activity": "🎬 CapCut Quote & Vlog Weekend Batching",
-            "type": "capcut_quote",
-        },
-        {
-            "start": "15:00",
-            "end": "17:00",
-            "activity": "💻 Personal Project Coding & Experiment",
-            "type": "coding",
-        },
-    ],
-    "Minggu": [
-        {
-            "start": "05:00",
-            "end": "06:00",
-            "activity": "🟢 Blok Al-Qur'an (Muroja'ah Pekanan)",
-            "type": "quran",
-        },
-        {
-            "start": "09:00",
-            "end": "10:00",
-            "activity": "📊 Weekly Review & Evaluation (Sistem Check)",
-            "type": "review",
-        },
-        {
-            "start": "16:00",
-            "end": "17:30",
-            "activity": "🗣️ Latihan Public Speaking & Relaxed Learning",
-            "type": "softskills",
-        },
-    ],
-}
+# --- SIDEBAR & TIME SIMULATION / CONFIG ---
+st.sidebar.header("⚙️ Pengaturan & Simulasi")
 
-# --- SIDEBAR CONTROL & SIMULATION ---
-st.sidebar.title("🎛️ Control Panel")
-mode = st.sidebar.radio(
-    "Modus Penentuan Waktu:", ["Waktu Real-time", "Simulasi Waktu Manual"]
+# Zona Waktu Selection
+tz_option = st.sidebar.selectbox(
+    "Zona Waktu Anda:",
+    ["WIB (Asia/Jakarta)", "WITA (Asia/Makassar)", "WIT (Asia/Jayapura)"],
+    index=0
 )
 
-days_list = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
-
-if mode == "Waktu Real-time":
-    now = datetime.datetime.now()
-    day_idx = now.weekday()  # 0 = Monday
-    selected_day = days_list[day_idx]
-    current_time_str = now.strftime("%H:%M")
+if "WITA" in tz_option:
+    current_tz = TIMEZONE_WITA
+elif "WIT" in tz_option:
+    current_tz = TIMEZONE_WIT
 else:
-    selected_day = st.sidebar.selectbox("Pilih Hari Simulasi:", days_list)
-    sim_time = st.sidebar.time_input("Pilih Jam Simulasi:", datetime.time(6, 15))
-    current_time_str = sim_time.strftime("%H:%M")
+    current_tz = TIMEZONE_WIB
 
-st.sidebar.markdown("---")
-st.sidebar.write("📌 **Pemicu Jangkar Hari Ini:**")
-st.sidebar.info("• Selesai Subuh ➔ Hafalan Al-Qur'an\n• 06.00 Pagi ➔ Batching CapCut Quote\n• Selesai Kuliah ➔ CapCut Vlog\n• Jam 16.00 ➔ Blok Coding\n• Jam 19.30 ➔ Soft Skills & Inggris")
+# Dapatkan Waktu Sekarang Sesuai Timezone
+now_real = datetime.datetime.now(current_tz)
 
-# --- MAIN CONTENT ---
+use_sim = st.sidebar.checkbox("Gunakan Simulasi Waktu Manual")
+
+if use_sim:
+    sim_days = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
+    selected_day = st.sidebar.selectbox("Pilih Hari Simulasi:", sim_days)
+    selected_time = st.sidebar.time_input("Pilih Jam Simulasi:", value=now_real.time())
+    now_time = selected_time
+    day_name = selected_day
+else:
+    now_time = now_real.time()
+    days_map = {0: "Senin", 1: "Selasa", 2: "Rabu", 3: "Kamis", 4: "Jumat", 5: "Sabtu", 6: "Minggu"}
+    day_name = days_map[now_real.weekday()]
+
+# --- HEADER APP ---
 st.markdown("<div class='main-header'>🚀 Personal System Assistant</div>", unsafe_allow_html=True)
-st.markdown(f"<div class='sub-header'>Hari: <b>{selected_day}</b> | Jam Aktif: <b>{current_time_str}</b></div>", unsafe_allow_html=True)
+st.markdown(f"<div class='sub-header'>Hari: <b>{day_name}</b> | Jam Aktif: <b>{now_time.strftime('%H:%M:%S')}</b> ({tz_option.split()[0]})</div>", unsafe_allow_html=True)
 
-# Find active schedule block
-day_schedule = SCHEDULE_DB.get(selected_day, [])
-active_block = None
-
-for block in day_schedule:
-    if block["start"] <= current_time_str <= block["end"]:
-        active_block = block
-        break
-
-# DISPLAY ACTIVE BLOCK OR NEXT BLOCK
-col_left, col_right = st.columns([1.2, 1])
-
-with col_left:
-    st.subheader("⏱️ Blok Waktu & Fokus Saat Ini")
-    if active_block:
-        st.markdown(
-            f"""
-        <div class='active-card'>
-            <h3 style='margin:0; color:#1E3A8A;'>{active_block['activity']}</h3>
-            <p style='margin:5px 0 0 0; color:#3B82F6;'><b>Waktu: {active_block['start']} - {active_block['end']}</b></p>
-        </div>
-        """,
-            unsafe_allow_html=True,
-        )
-        block_type = active_block["type"]
-    else:
-        st.info("🕒 Tidak ada jadwal blok khusus yang aktif saat ini. Anda berada di luar jam blok utama atau waktu istirahat.")
-        block_type = "general"
-
-    # CONTEXTUAL POP-UP MATERIALS
-    st.markdown("### 📋 Panduan & Bahan Otomatis")
+# --- DEFINISI BLOK JADWAL ---
+def get_current_block(day, current_time):
+    t_val = current_time.hour * 60 + current_time.minute
     
-    if block_type == "capcut_quote" or (active_block is None and st.checkbox("Tampilkan Bahan CapCut Quote")):
-        st.warning("🎬 **MODE CAPCUT QUOTE ACTIVE**: Berikut 6 Stok Quote Bahasa Inggris Hari Ini:")
-        quotes = bank_data.get("quotes", [])[:6]
-        for idx, q in enumerate(quotes, 1):
-            st.markdown(f"<div class='quote-box'><b>Quote #{idx}:</b> {q}</div>", unsafe_allow_html=True)
-        st.caption("💡 *Tips: Tinggal copy quote di atas dan paste ke template CapCut Anda!*")
+    # Rutin Pagi
+    if 300 <= t_val < 360: # 05.00 - 06.00
+        return "alquran", "Blok Spiritual & Hafalan Al-Qur'an", "05.00 - 06.00"
+    elif 360 <= t_val < 420: # 06.00 - 07.00
+        return "capcut_quote", "Blok CapCut Batching Quote (6 Template)", "06.00 - 07.00"
+        
+    # Rutin Perkuliahan SI (Senin - Jumat)
+    if day == "Senin":
+        if 510 <= t_val < 610: # 08.30 - 10.10
+            return "kuliah", "Kuliah: Pengantar Organisasi", "08.30 - 10.10"
+        elif 630 <= t_val < 690: # 10.30 - 11.30
+            return "capcut_vlog", "Blok CapCut Vlog (1 Template)", "10.30 - 11.30"
+        elif 780 <= t_val < 880: # 13.00 - 14.40
+            return "kuliah", "Kuliah: Keterampilan Komunikasi", "13.00 - 14.40"
+    elif day == "Selasa":
+        if 570 <= t_val < 670: # 09.30 - 11.10
+            return "kuliah", "Kuliah: Kalkulus", "09.30 - 11.10"
+        elif 780 <= t_val < 840: # 13.00 - 14.00
+            return "capcut_vlog", "Blok CapCut Vlog (1 Template)", "13.00 - 14.00"
+    elif day == "Rabu": # Full Online
+        if 620 <= t_val < 720: # 10.20 - 12.00
+            return "kuliah", "Kuliah Online: Bahasa Indonesia", "10.20 - 12.00"
+        elif 780 <= t_val < 880: # 13.00 - 14.40
+            return "kuliah", "Kuliah Online: Agama Islam", "13.00 - 14.40"
+        elif 880 <= t_val < 980: # 14.40 - 16.20
+            return "kuliah", "Kuliah Online: Pancasila", "14.40 - 16.20"
+    elif day == "Kamis": # Deep Work
+        if 510 <= t_val < 690: # 08.30 - 11.30
+            return "coding", "Deep Work: Coding & Tugas Sistem Informasi", "08.30 - 11.30"
+        elif 780 <= t_val < 840: # 13.00 - 14.00
+            return "capcut_vlog", "Blok CapCut Vlog (1 Template)", "13.00 - 14.00"
+    elif day == "Jumat":
+        if 480 <= t_val < 600: # 08.00 - 10.00
+            return "kuliah", "Kuliah: Algoritma dan Pemrograman", "08.00 - 10.00"
+        elif 600 <= t_val < 660: # 10.00 - 11.00
+            return "capcut_vlog", "Blok CapCut Vlog (1 Template)", "10.00 - 11.00"
+        elif 780 <= t_val < 880: # 13.00 - 14.40
+            return "kuliah", "Kuliah: Konsep Sistem Informasi", "13.00 - 14.40"
+            
+    # Rutin Sore & Malam
+    if 960 <= t_val < 1050: # 16.00 - 17.30
+        return "coding", "Blok Practice Coding & Logika Pemrograman", "16.00 - 17.30"
+    elif 1170 <= t_val < 1230: # 19.30 - 20.30
+        return "softskills", "Blok Soft Skills (Inggris, Public Speaking, Persuasi)", "19.30 - 20.30"
+    elif t_val >= 1260 or t_val < 300: # 21.00 - 05.00
+        return "istirahat", "Blok Istirahat & Fast Recovery (Tidur)", "21.00 - 05.00"
+        
+    return "free", "Blok Fleksibel / Istirahat Mandiri", "-"
 
-    elif block_type == "capcut_vlog":
-        st.success("📹 **MODE CAPCUT VLOG ACTIVE**: Formula Struktur Video Vlog 15 Detik:")
-        vlog_formula = bank_data.get("vlog_script", {})
-        for k, v in vlog_formula.items():
-            st.write(f"• **{k}**: {v}")
+block_type, block_title, block_time = get_current_block(day_name, now_time)
 
-    elif block_type == "quran":
-        st.success("🟢 **MODE AL-QUR'AN ACTIVE**: SOP 3 Tahap Hafalan Harian:")
-        st.markdown("""
-        <div class='sop-box'>
-        1. <b>Muroja'ah (15 Mnt)</b>: Ulangi 2–3 halaman hafalan lama.<br>
-        2. <b>Ziyadah (20 Mnt)</b>: Baca ayat baru 5x lihat mushaf + 5x tanpa lihat, sambungkan per baris.<br>
-        3. <b>Penanda (5 Mnt)</b>: Tes kelancaran & tandai batas untuk esok hari.
-        </div>
-        """, unsafe_allow_html=True)
+# --- DISPLAY BLOK AKTIF & CONTEXTUAL MATERIAL ---
+st.markdown(f"""
+<div class='active-card'>
+    <h3>📍 Aktivitas Aktif Saat Ini</h3>
+    <h2>{block_title}</h2>
+    <p><b>Durasi Blok:</b> {block_time}</p>
+</div>
+""", unsafe_allow_html=True)
 
-    elif block_type == "coding":
-        st.info("💻 **MODE CODING & SISTEM INFORMASI ACTIVE**: Metode 20/80 Pemrograman:")
-        st.markdown("""
-        <div class='sop-box'>
-        1. <b>20% Teori (12 Mnt)</b>: Pahami konsep/sintaks modul Python / Algoritma.<br>
-        2. <b>80% Praktik (48 Mnt)</b>: Langsung ketik kode & jalankan di IDE (Hands-on).<br>
-        3. <b>Catatan Error</b>: Jika ada bug, catat pesan error dan solusinya.
-        </div>
-        """, unsafe_allow_html=True)
+st.subheader("💡 Panduan & Bahan Otomatis Untuk Jam Ini")
 
-    elif block_type == "softskills":
-        st.info("🗣️ **MODE SOFT SKILLS 3-IN-1 ACTIVE**: Integrasi Komunikasi & Bahasa:")
-        st.markdown("""
-        <div class='sop-box'>
-        1. <b>Membaca (15 Mnt)</b>: Baca 1 artikel/buku persuasi/komunikasi berbahasa Inggris.<br>
-        2. <b>Shadowing (10 Mnt)</b>: Baca nyaring di depan cermin/kamera untuk melatih artikulasi.<br>
-        3. <b>Quotes Extraction</b>: Ambil 1 kalimat terbaik untuk ditambahkan ke Bank Bahan CapCut.
-        </div>
-        """, unsafe_allow_html=True)
+if block_type == "capcut_quote":
+    st.success("🎯 **Tugas**: Buat 6 Template Quote CapCut. Gunakan stok quote di bawah ini!")
+    st.markdown("<b>Stok 6 Quote Bahasa Inggris Hari Ini:</b>", unsafe_allow_html=True)
+    quotes = bank_data.get("quotes", [])[:6]
+    for idx, q in enumerate(quotes, 1):
+        st.markdown(f"<div class='quote-box'><b>Quote {idx}:</b> {q}</div>", unsafe_allow_html=True)
+    st.info("💡 *Tips Batching*: Copy teks quote di atas, paste ke layout preset CapCut Anda, ganti audio, lalu export sekaligus.")
 
-    else:
-        st.write("Pilih salah satu jadwal di samping atau gunakan tombol simulasi waktu di sebelah kiri untuk melihat bahan otomatis.")
+elif block_type == "capcut_vlog":
+    st.success("🎬 **Tugas**: Buat 1 Template Vlog CapCut.")
+    st.markdown("""
+    <div class='sop-box'>
+        <h4>Formula Video Vlog 15 Detik:</h4>
+        <ul>
+            <li><b>0 - 3 Detik (Hook)</b>: Cuplikan aktivitas menarik (misal: membuka laptop / mushaf).</li>
+            <li><b>3 - 13 Detik (Body)</b>: Process shot (suasana belajar / suasana perkuliahan).</li>
+            <li><b>13 - 15 Detik (CTA)</b>: Penutup dengan pertanyaan atau pesan positif.</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
 
-with col_right:
-    st.subheader("📅 Jadwal Lengkap Hari Ini")
-    for b in day_schedule:
-        is_current = (b["start"] <= current_time_str <= b["end"])
-        prefix = "👉 " if is_current else "• "
-        time_text = f"**{b['start']} - {b['end']}**"
-        if is_current:
-            st.success(f"{prefix}{time_text}: {b['activity']}")
-        else:
-            st.write(f"{prefix}{time_text}: {b['activity']}")
+elif block_type == "alquran":
+    st.markdown("""
+    <div class='sop-box'>
+        <h4>📖 SOP 3 Tahap Menghafal Al-Qur'an:</h4>
+        <ol>
+            <li><b>Tahap 1 (15 Mnt) - Muroja'ah</b>: Ulangi 2-3 halaman hafalan lama agar tetap lancar.</li>
+            <li><b>Tahap 2 (20 Mnt) - Ziyadah</b>: Baca ayat baru 5x dengan mushaf, 5x tanpa mushaf. Sambungkan per baris.</li>
+            <li><b>Tahap 3 (5 Mnt) - Penanda</b>: Tes hafalan baru tanpa salah, lalu tandai halaman untuk besok.</li>
+        </ol>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.subheader("✅ Habit Checklist Hari Ini")
-    c1 = st.checkbox("Hafalan Al-Qur'an & Muroja'ah")
-    c2 = st.checkbox("CapCut 6 Template Quote")
-    c3 = st.checkbox("CapCut 1 Template Vlog")
-    c4 = st.checkbox("Perkuliahan Sistem Informasi")
-    c5 = st.checkbox("Belajar / Praktik Coding")
-    c6 = st.checkbox("Latihan Soft Skills / Inggris")
-    
-    completed_count = sum([c1, c2, c3, c4, c5, c6])
-    st.progress(completed_count / 6.0)
-    st.caption(f"Capaian Harian: {completed_count}/6 Target Selesai")
+elif block_type == "coding":
+    st.markdown("""
+    <div class='sop-box'>
+        <h4>💻 SOP Belajar Coding (Metode 20/80):</h4>
+        <ol>
+            <li><b>20% Waktu (12 Mnt)</b>: Baca konsep/modul (misal: Algoritma, Python syntax, Struktur Data).</li>
+            <li><b>80% Waktu (48 Mnt)</b>: Hands-on Coding! Ketik kode secara langsung di IDE/Editor.</li>
+            <li><b>Catat Error</b>: Dokumentasikan pesan error dan cara penyelesaiannya di catatan ringkas.</li>
+        </ol>
+    </div>
+    """, unsafe_allow_html=True)
 
-# --- BANK BAHAN MANAGEMENT TAB ---
-st.markdown("---")
-with st.expander("📂 Pengelola Bank Bahan Quotes CapCut (Tambah & Edit)"):
-    st.write("Anda bisa menambahkan quote baru di sini. Quote ini akan tersimpan dan muncul saat blok CapCut Quote aktif.")
-    new_quote = st.text_input("Input Quote Bahasa Inggris Baru:")
-    if st.button("Simpan Quote Baru"):
+elif block_type == "softskills":
+    st.markdown("""
+    <div class='sop-box'>
+        <h4>🗣️ SOP Integrasi Soft Skills 3-in-1:</h4>
+        <ol>
+            <li><b>Langkah 1 (Inggris & Persuasi)</b>: Baca 1 artikel/bab tentang teknik komunikasi/persuasi Bahasa Inggris (15 mnt).</li>
+            <li><b>Langkah 2 (Public Speaking)</b>: Lakukan <i>Shadowing</i> - baca nyaring artikel tersebut di depan cermin/kamera (15 mnt).</li>
+            <li><b>Langkah 3 (Content Extraction)</b>: Ambil 1 quote paling menginspirasi dari artikel tersebut & tambahkan ke Bank Bahan CapCut!</li>
+        </ol>
+    </div>
+    """, unsafe_allow_html=True)
+
+elif block_type == "kuliah":
+    st.info("📚 **Fokus Perkuliahan**: Catat poin-poin utama materi kuliah dan pahami tugas yang diberikan dosen.")
+
+elif block_type == "istirahat":
+    st.warning("🌙 **Waktu Istirahat**: Jauhkan layar HP/Laptop. Tidur berkualitas untuk menjaga energi & kesehatan harian.")
+
+else:
+    st.info("☕ **Waktu Fleksibel**: Gunakan untuk makan, ibadah, bersosialisasi, atau evaluasi harian.")
+
+st.divider()
+
+# --- CHECKLIST HABIT HARIAN ---
+st.subheader("✅ Habit Checklist Harian")
+c1, c2, c3 = st.columns(3)
+
+with c1:
+    h1 = st.checkbox("Menghafal Al-Qur'an (Ziyadah + Muroja'ah)")
+    h2 = st.checkbox("CapCut Batching Quote (6 Template)")
+
+with c2:
+    h3 = st.checkbox("CapCut Vlog (1 Template)")
+    h4 = st.checkbox("Kuliah / Tugas Sistem Informasi")
+
+with c3:
+    h5 = st.checkbox("Belajar Coding / Algoritma (1 Jam)")
+    h6 = st.checkbox("Soft Skills (Inggris / Persuasi / Speaking)")
+
+completed = sum([h1, h2, h3, h4, h5, h6])
+st.progress(completed / 6)
+st.caption(f"Capaian Harian: {completed} dari 6 Habit Selesai ({int(completed/6*100)}%)")
+
+st.divider()
+
+# --- KELOLA BANK BAHAN CAPCUT ---
+st.subheader("📦 Pengelola Bank Bahan Quote CapCut")
+
+with st.expander("➕ Tambah Quote Baru ke Bank Bahan"):
+    new_quote = st.text_area("Tulis Quote Bahasa Inggris Baru:")
+    if st.button("Simpan Quote"):
         if new_quote.strip():
             bank_data["quotes"].append(new_quote.strip())
             save_bank_bahan(bank_data)
             st.success("Quote baru berhasil disimpan!")
             st.rerun()
-
-    st.write("**Daftar Quote Terseimpan Saat Ini:**")
-    for i, q in enumerate(bank_data.get("quotes", []), 1):
-        st.write(f"{i}. {q}")
